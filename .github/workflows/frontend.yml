@@ -1,0 +1,45 @@
+# This workflow will build the svelte frontend
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Community App Frontend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+    - 'frontend/**'
+#  pull_request:
+#    branches: [ "main" ]
+
+jobs:
+  build-frontend:
+    name: "Build Svelte frontend"
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        node-version: [20.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+#    - run: npm ci
+    - name: npm build
+#      working-directory: frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+        
+    - name: Delete Old static sites
+      run: sudo rm -rf /var/www/community/public
+      
+    - name: Prepare Svelte static files
+      working-directory: ./frontend
+      run: sudo cp -r ./public /var/www/community
